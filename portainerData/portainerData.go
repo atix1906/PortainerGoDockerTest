@@ -1,7 +1,7 @@
 package portainerData
 
 // Username is the portainer login username
-var Username = `[username]`
+var Username = `[usernamesdf]`
 
 // Password is the portainer login password
 var Password = `[password]`
