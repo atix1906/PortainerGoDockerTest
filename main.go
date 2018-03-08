@@ -1,8 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
+
+	"github.com/atix1906/PortainerGoDockerTest/portainerData"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -47,4 +53,22 @@ func main() {
 	}
 
 	io.Copy(os.Stdout, out)
+
+	portainerAuth()
+
+}
+
+func portainerAuth() {
+	url := portainerData.URL + "/api/auth"
+	var jsonStr = []byte(`{"username":"` + portainerData.Username + `","password":"` + portainerData.Password + `"}`)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("response Body:", string(body))
 }
