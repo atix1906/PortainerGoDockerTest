@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,6 +16,10 @@ import (
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
+
+type Jwt struct {
+	Key string `json:"jwt"`
+}
 
 func main() {
 	ctx := context.Background()
@@ -69,6 +74,11 @@ func portainerAuth() {
 		panic(err)
 	}
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	token := new(Jwt)
+	json.Unmarshal(body, token)
+	fmt.Println(token.Key)
 }
