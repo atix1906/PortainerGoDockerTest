@@ -83,7 +83,7 @@ func portainerAuth() {
 
 func portainerGetStack() {
 	portainerAuth()
-	url := portainerdata.URL + "/api/endpoints/1/stacks" // URL and endpoint ID need to be filled in
+	url := portainerdata.URL + "/api/endpoints/" + portainerdata.EndpointID + "/stacks" // URL and endpoint ID need to be filled in
 	req, err := http.NewRequest("GET", url, nil)
 	bearer := "Bearer " + token.Key
 	req.Header.Add("Authorization", bearer)
