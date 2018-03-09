@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,17 +10,17 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/atix1906/PortainerGoDockerTest/portainerData"
-
+	"github.com/atix1906/PortainerGoDockerTest/portainerdata"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"golang.org/x/net/context"
 )
 
 type Jwt struct {
 	Key string `json:"jwt"`
 }
+
+var token Jwt
 
 func main() {
 	ctx := context.Background()
@@ -59,13 +60,12 @@ func main() {
 
 	io.Copy(os.Stdout, out)
 
-	portainerAuth()
-
+	portainerGetStack()
 }
 
 func portainerAuth() {
-	url := portainerData.URL + "/api/auth"
-	var jsonStr = []byte(`{"username":"` + portainerData.Username + `","password":"` + portainerData.Password + `"}`)
+	url := portainerdata.URL + "/api/auth"                                                                            // URL needs to be filled in
+	var jsonStr = []byte(`{"username":"` + portainerdata.Username + `","password":"` + portainerdata.Password + `"}`) // Username and password need to be provided
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 
 	client := &http.Client{}
@@ -78,7 +78,27 @@ func portainerAuth() {
 	if err != nil {
 		panic(err)
 	}
-	token := new(Jwt)
-	json.Unmarshal(body, token)
-	fmt.Println(token.Key)
+	json.Unmarshal(body, &token)
+}
+
+func portainerGetStack() {
+	portainerAuth()
+	url := portainerdata.URL + "/api/endpoints/1/stacks" // URL and endpoint ID need to be filled in
+	req, err := http.NewRequest("GET", url, nil)
+	bearer := "Bearer " + token.Key
+	req.Header.Add("Authorization", bearer)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(body))
 }
