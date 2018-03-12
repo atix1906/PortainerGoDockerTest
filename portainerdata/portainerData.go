@@ -1,7 +1,7 @@
 package portainerdata
 
 // Username for portainer login
-var Username = `user`
+var Username = `name`
 
 // Password for portainer login
 var Password = `password`
@@ -10,4 +10,7 @@ var Password = `password`
 var URL = `url`
 
 // EndpointID for testing get stack
-var EndpointID = `id`
+var EndpointID = `1`
+
+// DockerComposeFile contains the docker-compose.yml content
+var DockerComposeFile = `docker-compose.yml filepath`

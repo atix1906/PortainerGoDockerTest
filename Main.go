@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -16,11 +17,46 @@ import (
 	"github.com/docker/docker/client"
 )
 
-type Jwt struct {
+type jwt struct {
 	Key string `json:"jwt"`
 }
 
-var token Jwt
+type stack struct {
+	ID              string          `json:"Id"`
+	Name            string          `json:"Name"`
+	EntryPoint      string          `json:"EntryPoint"`
+	SwarmID         string          `json:"SwarmId"`
+	ProjectPath     string          `json:"ProjectPath"`
+	Env             string          `json:"Env"`
+	ResourceControl resourceControl `json:"ResourceControl"`
+}
+
+type resourceControl struct {
+	ID                 string       `json:"Id"`
+	ResoureceID        string       `json:"ResourceId"`
+	SubResourceIDs     string       `json:"SubResourceIds"`
+	Type               string       `json:"Type"`
+	AdministratorsOnly string       `json:"AdministratorsOnly"`
+	UserAccesses       []string     `json:"UserAccesses"`
+	TeamAccesses       teamAccesses `json:"TeamAccesses"`
+}
+
+type teamAccesses struct {
+	TeamID      string `json:"TeamId"`
+	AccessLevel string `json:"AccessLevel"`
+}
+
+type stackUpdateRequest struct {
+	StackFileContent string `json:"StackFileContent"`
+	Env              env    `json:"Env[]"`
+}
+
+type env struct {
+	name  string `json:"name"`
+	value string `json:"value"`
+}
+
+var token jwt
 
 func main() {
 	ctx := context.Background()
@@ -85,6 +121,40 @@ func portainerGetStack() {
 	portainerAuth()
 	url := portainerdata.URL + "/api/endpoints/" + portainerdata.EndpointID + "/stacks" // URL and endpoint ID need to be filled in
 	req, err := http.NewRequest("GET", url, nil)
+	bearer := "Bearer " + token.Key
+	req.Header.Add("Authorization", bearer)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var stacks []stack
+	json.Unmarshal(body, &stacks)
+
+	portainerUpdateStack(stacks[0].ID)
+}
+
+func portainerUpdateStack(stackID string) {
+	data, err := ioutil.ReadFile(portainerdata.DockerComposeFile)
+	if err != nil {
+		log.Printf("Error: %s", err)
+	}
+	var newBody stackUpdateRequest
+	newBody.StackFileContent = string(data)
+	bodyBytes, err := json.Marshal(newBody)
+	if err != nil{
+		panic(err)
+	}
+	url := portainerdata.URL + "/api/endpoints/" + portainerdata.EndpointID + "/stacks/" + stackID // URL and endpoint ID need to be filled in
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(bodyBytes))
 	bearer := "Bearer " + token.Key
 	req.Header.Add("Authorization", bearer)
 
