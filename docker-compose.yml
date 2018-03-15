@@ -1,0 +1,29 @@
+version: "3"
+services:
+  t1:
+    image: atix1906/mm-inc
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+    networks:
+      - datanet
+
+  t2:
+    image: atix1906/mm-inc
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+    networks:
+      - datanet
+networks:
+  datanet:
